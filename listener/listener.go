@@ -27,11 +27,11 @@ func init() {
 // failed.
 type ListenerWrapper struct {
 	// Upstream is ...
-	Upstream app.Upstream `json:"-,omitempty"`
+	Upstream app.Upstream `json:"upstream,omitempty"`
 	// Proxy is ...
-	Proxy app.Proxy `json:"-,omitempty"`
+	Proxy app.Proxy `json:"proxy,omitempty"`
 	// Logger is ...
-	Logger *zap.Logger `json:"-,omitempty"`
+	Logger *zap.Logger `json:"logger,omitempty"`
 	// Verbose is ...
 	Verbose bool `json:"verbose,omitempty"`
 }
@@ -154,9 +154,9 @@ func (l *Listener) loop() {
 				nr, err := c.Read(b[n : n+1])
 				if err != nil {
 					if errors.Is(err, io.EOF) {
-						lg.Error(fmt.Sprintf("read prefix error: read tcp %v -> %v: read: %v", c.RemoteAddr(), c.LocalAddr(), err))
+						lg.Debug(fmt.Sprintf("read prefix error: read tcp %v -> %v: read: %v", c.RemoteAddr(), c.LocalAddr(), err))
 					} else {
-						lg.Error(fmt.Sprintf("read prefix error, not io, rewind and let normal caddy deal with it: %v", err))
+						lg.Debug(fmt.Sprintf("read prefix error, not io, rewind and let normal caddy deal with it: %v", err))
 						l.conns <- utils.RewindConn(c, b[:n+1])
 						return
 					}
@@ -192,12 +192,12 @@ func (l *Listener) loop() {
 			if l.Verbose {
 				lg.Info(fmt.Sprintf("handle trojan net.Conn from %v", c.RemoteAddr()))
 			}
-
-			nr, nw, err := l.Proxy.Handle(io.Reader(c), io.Writer(c))
+			_, _, err := l.Proxy.Handle(io.Reader(c), io.Writer(c))
+			// nr, nw, err := l.Proxy.Handle(io.Reader(c), io.Writer(c))
 			if err != nil {
-				lg.Error(fmt.Sprintf("handle net.Conn error: %v", err))
+				lg.Debug(fmt.Sprintf("handle net.Conn error: %v", err))
 			}
-			up.Consume(utils.ByteSliceToString(b[:trojan.HeaderLen]), nr, nw)
+			// up.Consume(utils.ByteSliceToString(b[:trojan.HeaderLen]), nr, nw)
 		}(conn, l.Logger, l.Upstream)
 	}
 }
