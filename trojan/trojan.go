@@ -54,6 +54,30 @@ func (*netDialer) ListenPacket(network, addr string) (net.PacketConn, error) {
 
 // HandleWithDialer is ...
 func HandleWithDialer(r io.Reader, w io.Writer, d Dialer) (int64, int64, error) {
+	// where Trojan Request is a SOCKS5-like request:
+	// +-----+------+----------+----------+
+	// | CMD | ATYP | DST.ADDR | DST.PORT |
+	// +-----+------+----------+----------+
+	// |  1  |  1   | Variable |    2     |
+	// +-----+------+----------+----------+
+	// where:
+	// 	o  CMD
+	// 		o  CONNECT X'01'
+	// 		o  UDP ASSOCIATE X'03'
+	// 	o  ATYP address type of following address
+	// 		o  IP V4 address: X'01'
+	// 		o  DOMAINNAME: X'03'
+	// 		o  IP V6 address: X'04'
+	// 	o  DST.ADDR desired destination address
+	// 	o  DST.PORT desired destination port in network octet order
+
+	// If the connection is a UDP ASSOCIATE, then each UDP packet has the following format:
+	// +-----+------+----------+----------+--------+---------+----------+
+	// | CMD | ATYP | DST.ADDR | DST.PORT | Length |  CRLF   | Payload  |
+	// +-----+------+----------+----------+--------+---------+----------+
+	// |  1  |  1   | Variable |    2     |   2    | X'0D0A' | Variable |
+	// +-----+------+----------+----------+--------+---------+----------+
+
 	b := [1 + socks.MaxAddrLen + 2]byte{}
 
 	// read command
