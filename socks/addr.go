@@ -40,8 +40,14 @@ func (*Addr) Network() string {
 // String is ...
 func (addr *Addr) String() string {
 	switch addr.data[0] {
+	// +------+----------+----------+
+	// | ATYP | DST.ADDR | DST.PORT |
+	// +------+----------+----------+
+	// |  1   | Variable |    2     |
+	// +------+----------+----------+
 	case AddrTypeIPv4:
 		host := net.IP(addr.data[1 : 1+net.IPv4len]).String()
+		// port calculate: Big-Endian Little-Endian
 		port := strconv.Itoa(int(addr.data[1+net.IPv4len])<<8 | int(addr.data[1+net.IPv4len+1]))
 		return net.JoinHostPort(host, port)
 	case AddrTypeDomain:
@@ -88,7 +94,11 @@ func ReadAddrBuffer(conn io.Reader, addr []byte) (*Addr, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	// +------+----------+----------+
+	// | ATYP | DST.ADDR | DST.PORT |
+	// +------+----------+----------+
+	// |  1   | Variable |    2     |
+	// +------+----------+----------+
 	switch addr[0] {
 	case AddrTypeIPv4:
 		n := 1 + net.IPv4len + 2
