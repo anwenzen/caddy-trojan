@@ -31,7 +31,7 @@ type Upstream interface {
 	// Validate is ...
 	Validate(string) bool
 	// Consume is ...
-	Consume(string, int64, int64) error
+	// Consume(string, int64, int64) error
 }
 
 // TaskType is ...
@@ -107,7 +107,7 @@ func (u *MemoryUpstream) Provision(ctx caddy.Context) error {
 			case TaskDelete:
 				up.Delete(t.Value.Password)
 			case TaskConsume:
-				up.Consume(t.Value.Key, t.Value.Up, t.Value.Down)
+				// up.Consume(t.Value.Key, t.Value.Up, t.Value.Down)
 			default:
 			}
 		}
