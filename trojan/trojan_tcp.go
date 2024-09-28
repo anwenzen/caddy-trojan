@@ -56,6 +56,7 @@ func HandleTCP(r io.Reader, w io.Writer, addr net.Addr, d Dialer) (int64, int64,
 	}
 
 	errCh := make(chan Result, 0)
+	// copy data from client to desired destination address
 	go func(rc net.Conn, r io.Reader, errCh chan Result) {
 		ptr, buf := memory.Alloc[byte](32 * 1024)
 		defer memory.Free(ptr)
