@@ -149,6 +149,12 @@ func (l *Listener) loop() {
 		}
 
 		go func(c net.Conn, lg *zap.Logger, up app.Upstream) {
+			// https://trojan-gfw.github.io/trojan/protocol
+			// +-----------------------+---------+----------------+---------+----------+
+			// | hex(SHA224(password)) |  CRLF   | Trojan Request |  CRLF   | Payload  |
+			// +-----------------------+---------+----------------+---------+----------+
+			// |          56           | X'0D0A' |    Variable    | X'0D0A' | Variable |
+			// +-----------------------+---------+----------------+---------+----------+
 			b := make([]byte, trojan.HeaderLen+2)
 			for n := 0; n < trojan.HeaderLen+2; n += 1 {
 				nr, err := c.Read(b[n : n+1])
