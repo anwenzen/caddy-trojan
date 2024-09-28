@@ -91,11 +91,12 @@ func (m *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyht
 			m.Logger.Info(fmt.Sprintf("handle trojan http%d from %v", r.ProtoMajor, r.RemoteAddr))
 		}
 
-		nr, nw, err := m.Proxy.Handle(r.Body, NewFlushWriter(w))
+		_, _, err := m.Proxy.Handle(r.Body, NewFlushWriter(w))
+		// nr, nw, err := m.Proxy.Handle(r.Body, NewFlushWriter(w))
 		if err != nil {
 			m.Logger.Error(fmt.Sprintf("handle http%d error: %v", r.ProtoMajor, err))
 		}
-		m.Upstream.Consume(auth, nr, nw)
+		// m.Upstream.Consume(auth, nr, nw)
 		return nil
 	}
 
@@ -121,11 +122,12 @@ func (m *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyht
 			m.Logger.Info(fmt.Sprintf("handle trojan websocket.Conn from %v", r.RemoteAddr))
 		}
 
-		nr, nw, err := m.Proxy.Handle(io.Reader(c), io.Writer(c))
+		_, _, err = m.Proxy.Handle(io.Reader(c), io.Writer(c))
+		// nr, nw, err := m.Proxy.Handle(io.Reader(c), io.Writer(c))
 		if err != nil {
 			m.Logger.Error(fmt.Sprintf("handle websocket error: %v", err))
 		}
-		m.Upstream.Consume(utils.ByteSliceToString(b[:trojan.HeaderLen]), nr, nw)
+		// m.Upstream.Consume(utils.ByteSliceToString(b[:trojan.HeaderLen]), nr, nw)
 		return nil
 	}
 	return next.ServeHTTP(w, r)
