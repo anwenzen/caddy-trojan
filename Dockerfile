@@ -1,23 +1,17 @@
 FROM golang:1.22-alpine AS builder
-
-RUN set -e \
-    && apk upgrade \
-    && apk add jq curl git \
-    && export version=$(curl -s "https://api.github.com/repos/caddyserver/caddy/releases/latest" | jq -r .tag_name) \
-    && echo ">>>>>>>>>>>>>>> ${version} ###############" \
+COPY ./ /caddy-trojan
+RUN apk add git \
     && go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest \
-    && xcaddy build ${version} --output /caddy \
-        --with github.com/anwenzen/caddy-trojan
+    && xcaddy build --output /caddy \
+        --with github.com/imgk/caddy-trojan \
+        --replace github.com/imgk/caddy-trojan=/caddy-trojan
 
 
 FROM alpine:latest AS dist
 
-LABEL maintainer="mritd <mritd@linux.com>"
-
 # See https://caddyserver.com/docs/conventions#file-locations for details
 ENV XDG_CONFIG_HOME /config
 ENV XDG_DATA_HOME /data
-
 ENV TZ Asia/Shanghai
 
 COPY --from=builder /caddy /usr/bin/caddy
