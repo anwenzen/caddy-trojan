@@ -1,4 +1,4 @@
-FROM golang:1.18-alpine AS builder
+FROM golang:1.22-alpine AS builder
 
 RUN set -e \
     && apk upgrade \
@@ -7,21 +7,10 @@ RUN set -e \
     && echo ">>>>>>>>>>>>>>> ${version} ###############" \
     && go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest \
     && xcaddy build ${version} --output /caddy \
-        --with github.com/caddy-dns/route53 \
-        --with github.com/caddy-dns/cloudflare \
-        --with github.com/caddy-dns/alidns \
-        --with github.com/caddy-dns/vultr \
-        --with github.com/caddy-dns/dnspod \
-        --with github.com/caddy-dns/duckdns \
-        --with github.com/caddy-dns/gandi \
-        --with github.com/hairyhenderson/caddy-teapot-module \
-        --with github.com/caddyserver/transform-encoder \
-        --with github.com/mholt/caddy-webdav \
-        --with github.com/imgk/caddy-trojan \
-        --with github.com/imgk/caddy-pprof
+        --with github.com/anwenzen/caddy-trojan
 
 
-FROM alpine AS dist
+FROM alpine:latest AS dist
 
 LABEL maintainer="mritd <mritd@linux.com>"
 
@@ -35,23 +24,17 @@ COPY --from=builder /caddy /usr/bin/caddy
 ADD https://raw.githubusercontent.com/caddyserver/dist/master/config/Caddyfile /etc/caddy/Caddyfile
 ADD https://raw.githubusercontent.com/caddyserver/dist/master/welcome/index.html /usr/share/caddy/index.html
 
-# set up nsswitch.conf for Go's "netgo" implementation
-# - https://github.com/golang/go/blob/go1.9.1/src/net/conf.go#L194-L275
-# - docker run --rm debian:stretch grep '^hosts:' /etc/nsswitch.conf
-RUN [ ! -e /etc/nsswitch.conf ] && echo 'hosts: files dns' > /etc/nsswitch.conf
-
-RUN set -e \
-    && apk upgrade \
-    && apk add bash tzdata mailcap \
+RUN apk add tzdata \
     && ln -sf /usr/share/zoneinfo/${TZ} /etc/localtime \
     && echo ${TZ} > /etc/timezone \
     && rm -rf /var/cache/apk/*
 
 VOLUME /config
-VOLUME /data
+VOLUME /dataclear
 
 EXPOSE 80
 EXPOSE 443
+EXPOSE 443/udp
 EXPOSE 2019
 
 WORKDIR /srv
